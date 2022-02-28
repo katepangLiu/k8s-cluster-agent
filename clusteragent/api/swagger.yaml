@@ -3,7 +3,7 @@ info:
   title: Cluster Agent API
   description: Cluster Agent API
   contact:
-    email: you@your-company.com
+    email: katepangliu@gmail.com
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -15,13 +15,39 @@ tags:
 - name: nodeagent
   description: Operations available to nodeagent
 paths:
+  /tags/pod/{nodeName}:
+    get:
+      tags:
+      - nodeagent
+      summary: list services
+      description: |
+        List all services in the node or in the cluster
+      operationId: getPodMetadataForNode
+      parameters:
+      - name: nodeName
+        in: path
+        description: k8s nodename
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List all services in the node or in the cluster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespacesPodsStringsSet'
+        "400":
+          description: bad input parameter
   /tags/pod/{nodeName}/{ns}/{podName}:
     get:
       tags:
       - nodeagent
       summary: list services
       description: |
-        Get Pod Metadata
+        List all services in the node
       operationId: getPodMetadata
       parameters:
       - name: nodeName
@@ -50,89 +76,25 @@ paths:
           type: string
       responses:
         "200":
-          description: List all services in the node or in the cluster
+          description: List all services in the pod
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pod'
-                x-content-type: application/json
-        "400":
-          description: bad input parameter
-  /tags/pod/{nodeName}:
-    get:
-      tags:
-      - nodeagent
-      summary: list services
-      description: |
-        List all services in the node or in the cluster
-      operationId: getPodMetadataForNode
-      parameters:
-      - name: nodeName
-        in: path
-        description: k8s nodename
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: List all services in the node or in the cluster
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/NS'
-                x-content-type: application/json
+                $ref: '#/components/schemas/PodsStringsSet'
         "400":
           description: bad input parameter
 components:
   schemas:
-    NS:
-      required:
-      - ns
-      - pods
+    NamespacesPodsStringsSet:
       type: object
-      properties:
-        ns:
-          type: string
-          example: default
-        pods:
-          type: array
-          items:
-            $ref: '#/components/schemas/Pod'
-      example:
-        ns: default
-        pods:
-        - podName: "[\"traefik-kfnda6\"]"
-          services:
-          - "[\"traefik\",\"traefik-metrics\"]"
-          - "[\"traefik\",\"traefik-metrics\"]"
-        - podName: "[\"traefik-kfnda6\"]"
-          services:
-          - "[\"traefik\",\"traefik-metrics\"]"
-          - "[\"traefik\",\"traefik-metrics\"]"
-    Pod:
-      required:
-      - podName
-      - tags
+      additionalProperties:
+        $ref: '#/components/schemas/PodsStringsSet'
+      example: namespace-treafik
+      x-schema-name: NamespacesPodsStringsSet
+    PodsStringsSet:
       type: object
-      properties:
-        podName:
-          type: string
-          example: "[\"traefik-kfnda6\"]"
-        services:
-          type: array
-          items:
-            $ref: '#/components/schemas/service'
-      example:
-        podName: "[\"traefik-kfnda6\"]"
-        services:
-        - "[\"traefik\",\"traefik-metrics\"]"
-        - "[\"traefik\",\"traefik-metrics\"]"
-    service:
-      type: string
-      example: "[\"traefik\",\"traefik-metrics\"]"
+      additionalProperties:
+        type: string
+        example: traefik
+      example: pod-traefik
+      x-schema-name: PodsStringsSet
