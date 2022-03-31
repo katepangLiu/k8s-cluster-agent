@@ -1,0 +1,69 @@
+# namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pang
+---
+# ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: svcaccount-nodeagent
+  namespace: pang
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterrole-view-all
+rules:
+  - apiGroups:
+      - "" # "" indicates the core API group
+    resources:
+      - *
+    verbs:
+      - get
+      - list
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cbinding-nodeagent-view-all
+subjects:
+  - kind: ServiceAccount
+    name: svcaccount-nodeagent
+    namespace: pang
+roleRef:
+  kind: ClusterRole
+  name: clusterrole-view-all
+  apiGroup: rbac.authorization.k8s.io
+---
+# DaemonSet
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nodeagent
+  namespace: pang
+spec:
+  selector:
+    matchLabels:
+      name: nodeagent
+  template:
+    metadata:
+      labels:
+        name: nodeagent
+    spec:
+      serviceAccountName: svcaccount-nodeagent
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+      - name: pang-nodeagent
+        image: pang/nodeagent
+        env:
+        - name: KUBE_NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        securityContext:
+          privileged: true
+
